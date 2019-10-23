@@ -25,4 +25,17 @@ public class DataFactory_TEST {
         List<Account> someObjects = (List<Account>)DataFactory.many('Account', count);
     }
 
+    @isTest
+    private static void get_factory() {
+        String factoryType;
+        DataFactory.SObjectFactory factory;
+        try {
+            factory = DataFactory.get('Account');
+            factoryType = factory.one().getSObjectType().getDescribe().getName();
+        } catch (DataFactory.SObjectNotRegisteredException e) {
+            factoryType = e.getMessage();
+        }
+        System.assertEquals('Account', factoryType);
+    }
+
 }

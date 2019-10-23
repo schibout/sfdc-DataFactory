@@ -1,25 +1,46 @@
 global without sharing class DataFactory {
 
-    public static Map<String, DataFactory.SObjectFactory> factories;
+    private static Map<String, DataFactory.SObjectFactory> factories;
     static {
         // Load factories from DataFactory_Objects Metadata records.
         factories = new Map<String, DataFactory.SObjectFactory>();
-        for (DataFactory_Object__mdt factoryMap : [SELECT MasterLabel, Apex_Class__c FROM DataFactory_Object__mdt]) {
-            Type classType = Type.forName(factoryMap.Apex_Class__c);
-            Object classInstance;
+        List<DataFactory_Object__mdt> factoryHandlers = [
+            SELECT 
+                MasterLabel, 
+                Apex_Class__c 
+            FROM DataFactory_Object__mdt
+        ];
+        for (DataFactory_Object__mdt factorySettings : factoryHandlers) {
+            Type classType = Type.forName(factorySettings.Apex_Class__c);
             if (classType != null) {
-                classInstance = classType.newInstance();
+                Object classInstance = classType.newInstance();
                 if (classInstance instanceof DataFactory.SObjectFactory) {
-                    DataFactory.SObjectFactory factory = (DataFactory.SObjectFactory)classInstance;
-                    factories.put(factoryMap.MasterLabel, factory);
+                    factories.put(
+                        factorySettings.MasterLabel, 
+                        (DataFactory.SObjectFactory)classInstance
+                    );
                 }
             }
         }
     }
 
+    public class SObjectNotRegisteredException extends Exception {}
+
+    /**
+     * Get a Data Factory for a SObject, if registered in DataFactory_Object__mdt.
+     * 
+     * @param typeName  Name of the sObject type to find a factory.
+     * @return  An class which implements DataFactory.SObjectFactory.
+     * @throws  DataFactory.SObjectNotRegisteredException if DataFactory_Object not found.
+     */
     public static DataFactory.SObjectFactory get(String typeName) {
-        return factories.get(typeName);
+        DataFactory.SObjectFactory factory = factories.get(typeName);
+        if (factory == null) {
+            throw new DataFactory.SObjectNotRegisteredException(typeName);
+        } 
+        return factory;
     }
+
     /**
      * Generates an sObject of a given type. 
      * 
