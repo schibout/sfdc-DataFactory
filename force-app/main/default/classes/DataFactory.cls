@@ -7,8 +7,8 @@ global without sharing class DataFactory {
      * desired type. Fields can either be set using `put(fieldName, value)`
      * or by casting the object to the desired type.
      * 
-     * @param typeName  Name of the Object type to create.
-     * @return  A single Object.
+     * @param typeName  Name of the sObject type to create.
+     * @return  A single sObject.
      */
     public static sObject one(String typeName) {
         return Schema.getGlobalDescribe().get(typeName).newSObject();
@@ -22,8 +22,8 @@ global without sharing class DataFactory {
      * or by casting the object to the desired type.
      * 
      * @param typeName  Name of the Object type to create.
-     * @param count A number of SObjects to generate.
-     * @return  A List of SObjects.
+     * @param count A number of sObjects to generate.
+     * @return  A List of sObjects.
      */
     public static List<sObject> many(String typeName, Integer count) {
         List<sObject> newObjects = new List<sObject>();
