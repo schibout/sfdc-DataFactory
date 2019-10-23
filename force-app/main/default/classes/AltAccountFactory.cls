@@ -1,4 +1,4 @@
-public class AccountFactory implements DataFactory.sObjectFactory {
+public class AltAccountFactory implements DataFactory.sObjectFactory {
     
     /**
      * Generates an Account with a name.
@@ -7,7 +7,7 @@ public class AccountFactory implements DataFactory.sObjectFactory {
      */
     public static sObject one() {
         return new Account(
-            name = 'Test'
+            name = 'Tester'
         );
     }
 

@@ -1,10 +1,25 @@
 global without sharing class DataFactory {
 
-    public static AccountFactory Account;
+    public static Map<String, DataFactory.SObjectFactory> factories;
     static {
-        Account = new AccountFactory();
+        // Load factories from DataFactory_Objects Metadata records.
+        factories = new Map<String, DataFactory.SObjectFactory>();
+        for (DataFactory_Object__mdt factoryMap : [SELECT MasterLabel, Apex_Class__c FROM DataFactory_Object__mdt]) {
+            Type classType = Type.forName(factoryMap.Apex_Class__c);
+            Object classInstance;
+            if (classType != null) {
+                classInstance = classType.newInstance();
+                if (classInstance instanceof DataFactory.SObjectFactory) {
+                    DataFactory.SObjectFactory factory = (DataFactory.SObjectFactory)classInstance;
+                    factories.put(factoryMap.MasterLabel, factory);
+                }
+            }
+        }
     }
 
+    public static DataFactory.SObjectFactory get(String typeName) {
+        return factories.get(typeName);
+    }
     /**
      * Generates an sObject of a given type. 
      * 
@@ -37,6 +52,30 @@ global without sharing class DataFactory {
             count--;
         }
         return newObjects;
+    }
+
+    global interface SObjectFactory {
+        /**
+         * Generates an sObject of a given type. 
+         * 
+         * The sObject itself does not include the Fields properties of the
+         * desired type. Fields can either be set using `put(fieldName, value)`
+         * or by casting the object to the desired type.
+         * 
+         * @return  A single sObject.
+         */
+        sObject one();
+        /**
+         * Generates a list of SObjects with a given size and of a given type. 
+         * 
+         * The sObject itself does not include the Fields properties of the
+         * desired type. Fields can either be set using `put(fieldName, value)`
+         * or by casting the object to the desired type.
+         * 
+         * @param count A number of SObjects to generate.
+         * @return  A List of sObjects.
+         */
+        List<sObject> many(Integer count);
     }
 
 }

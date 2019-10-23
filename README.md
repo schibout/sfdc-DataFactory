@@ -18,18 +18,18 @@ While the code can be adjusted to meet the new requirements in a unmanaged packa
 The `DataFactory` provides an abstraction over this record creation, for example
 
 ```java
-Contact aContact = DataFactory.Contact.one();
+Contact aContact = (Contact)DataFactory.get('Contact').one();
 insert aContact;
 ```
 
 How does this work?
 
-`DataFactory.Contact` is a DataFactory-like class that implements a `one()` method to generate a single Contact record.
+`DataFactory.get('Contact')` returns factory class that implements a `one()` method to generate a single Contact record.
 
 In a default Salesforce implementation, this Contact DataFactory may look like
 
 ```java
-public class ContactFactory {
+public class ContactFactory implements DataFactory.sObjectFactory {
     public Contact one() {
         return new Contact(LastName='Tester');
     }
@@ -39,7 +39,7 @@ public class ContactFactory {
 But in an Org with a Contact Validation Rule, a new Contact Data Factory can be written to account for this new condition.
 
 ```java
-public class MyContactFactory {
+public class MyContactFactory implements DataFactory.sObjectFactory {
     public Contact one() {
         return new Contact(
             FirstName='John',
@@ -49,7 +49,7 @@ public class MyContactFactory {
 }
 ```
 
-Once this class is registered in the DataFactory, the `DataFactory.Contact.one();` operation works in the new environment without changing the tests.
+Once this class is registered in the DataFactory_Object Custom Metadata Type, the `DataFactory.get('Contact').one();` operation works in the new environment without changing the tests.
 
 While this package includes a `DataFactory` Apex class that can be deployed and used in a Salesforce Org, the implementation is, at this time, overly simple and not of much use. Instead, this project should be used as a template for implementing an extensible `DataFactory` into your own project.
 
