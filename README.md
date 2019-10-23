@@ -1,58 +1,86 @@
-# Salesforce App
+# Salesforce Apex DataFactory
 
-This guide helps Salesforce developers who are new to Visual Studio Code go from zero to a deployed app using Salesforce Extensions for VS Code and Salesforce CLI.
+The `DataFactory` is a Salesofrce Apex class that provides a standard model for generating data. 
 
-## Part 1: Choosing a Development Model
+By defining a standard model, it becomes possible to to build an configurable extension framework that can allow for custom data factories adapted to the unique contraints of each Salesforce Org.
 
-There are two types of developer processes or models supported in Salesforce Extensions for VS Code and Salesforce CLI. These models are explained below. Each model offers pros and cons and is fully supported.
+For example, when writing a Salesforce App that generates Contact records, even if only for Apex Tests, by default Salesforce only requires that Contacts have a Last Name, so your Apex code may look like
 
-### Package Development Model
-
-The package development model allows you to create self-contained applications or libraries that are deployed to your org as a single package. These packages are typically developed against source-tracked orgs called scratch orgs. This development model is geared toward a more modern type of software development process that uses org source tracking, source control, and continuous integration and deployment.
-
-If you are starting a new project, we recommend that you consider the package development model. To start developing with this model in Visual Studio Code, see [Package Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/package-development-model). For details about the model, see the [Package Development Model](https://trailhead.salesforce.com/en/content/learn/modules/sfdx_dev_model) Trailhead module.
-
-If you are developing against scratch orgs, use the command `SFDX: Create Project` (VS Code) or `sfdx force:project:create` (Salesforce CLI)  to create your project. If you used another command, you might want to start over with that command.
-
-When working with source-tracked orgs, use the commands `SFDX: Push Source to Org` (VS Code) or `sfdx force:source:push` (Salesforce CLI) and `SFDX: Pull Source from Org` (VS Code) or `sfdx force:source:pull` (Salesforce CLI). Do not use the `Retrieve` and `Deploy` commands with scratch orgs.
-
-### Org Development Model
-
-The org development model allows you to connect directly to a non-source-tracked org (sandbox, Developer Edition (DE) org, Trailhead Playground, or even a production org) to retrieve and deploy code directly. This model is similar to the type of development you have done in the past using tools such as Force.com IDE or MavensMate.
-
-To start developing with this model in Visual Studio Code, see [Org Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/org-development-model). For details about the model, see the [Org Development Model](https://trailhead.salesforce.com/content/learn/modules/org-development-model) Trailhead module.
-
-If you are developing against non-source-tracked orgs, use the command `SFDX: Create Project with Manifest` (VS Code) or `sfdx force:project:create --manifest` (Salesforce CLI) to create your project. If you used another command, you might want to start over with this command to create a Salesforce DX project.
-
-When working with non-source-tracked orgs, use the commands `SFDX: Deploy Source to Org` (VS Code) or `sfdx force:source:deploy` (Salesforce CLI) and `SFDX: Retrieve Source from Org` (VS Code) or `sfdx force:source:retrieve` (Salesforce CLI). The `Push` and `Pull` commands work only on orgs with source tracking (scratch orgs).
-
-## The `sfdx-project.json` File
-
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
-
-The most important parts of this file for getting started are the `sfdcLoginUrl` and `packageDirectories` properties.
-
-The `sfdcLoginUrl` specifies the default login URL to use when authorizing an org.
-
-The `packageDirectories` filepath tells VS Code and Salesforce CLI where the metadata files for your project are stored. You need at least one package directory set in your file. The default setting is shown below. If you set the value of the `packageDirectories` property called `path` to `force-app`, by default your metadata goes in the `force-app` directory. If you want to change that directory to something like `src`, simply change the `path` value and make sure the directory you’re pointing to exists.
-
-```json
-"packageDirectories" : [
-    {
-      "path": "force-app",
-      "default": true
-    }
-]
+```java
+Contact aContact = new Contact(LastName='Tester');
+insert aContact;
 ```
 
-## Part 2: Working with Source
+However, when this code is deployed and execute in a Salesfroce Org with a Validation Rule ensuring the Contacts also have First Names, the code can throw an error.
 
-For details about developing against scratch orgs, see the [Package Development Model](https://trailhead.salesforce.com/en/content/learn/modules/sfdx_dev_model) module on Trailhead or [Package Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/package-development-model).
+While the code can be adjusted to meet the new requirements in a unmanaged package, this can result in each implementation diverging from the original code repository, forcing everyone to maintian their own fork of the project.
 
-For details about developing against orgs that don’t have source tracking, see the [Org Development Model](https://trailhead.salesforce.com/content/learn/modules/org-development-model) module on Trailhead or [Org Development Model with VS Code](https://forcedotcom.github.io/salesforcedx-vscode/articles/user-guide/org-development-model).
+The `DataFactory` provides an abstraction over this record creation, for example
 
-## Part 3: Deploying to Production
+```java
+Contact aContact = DataFactory.Contact.one();
+insert aContact;
+```
 
-Don’t deploy your code to production directly from Visual Studio Code. The deploy and retrieve commands do not support transactional operations, which means that a deployment can fail in a partial state. Also, the deploy and retrieve commands don’t run the tests needed for production deployments. The push and pull commands are disabled for orgs that don’t have source tracking, including production orgs.
+How does this work?
 
-Deploy your changes to production using [packaging](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_dev2gp.htm) or by [converting your source](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_force_source.htm#cli_reference_convert) into metadata format and using the [metadata deploy command](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_force_mdapi.htm#cli_reference_deploy).
+`DataFactory.Contact` is a DataFactory-like class that implements a `one()` method to generate a single Contact record.
+
+In a default Salesforce implementation, this Contact DataFactory may look like
+
+```java
+public class ContactFactory {
+    public Contact one() {
+        return new Contact(LastName='Tester');
+    }
+}
+```
+
+But in an Org with a Contact Validation Rule, a new Contact Data Factory can be written to account for this new condition.
+
+```java
+public class MyContactFactory {
+    public Contact one() {
+        return new Contact(
+            FirstName='John',
+            LastName='Tester'
+        );
+    }
+}
+```
+
+Once this class is registered in the DataFactory, the `DataFactory.Contact.one();` operation works in the new environment without changing the tests.
+
+While this package includes a `DataFactory` Apex class that can be deployed and used in a Salesforce Org, the implementation is, at this time, overly simple and not of much use. Instead, this project should be used as a template for implementing an extensible `DataFactory` into your own project.
+
+## Developer Setup and Build
+
+This project is maintainted as Salesforce DX _source_ and requires the [Salesforce CLI] `sfdx`. 
+
+It is recommended to work on this project in a Salesforce Scratch Org which requires a Salesforce Org with the DevHub feature enabled. This can be any production environment, including a free [Developer Org].
+
+Login to your DevHub Org.
+
+```
+sfdx force:auth:web:login
+```
+
+Create the Scrtch Org from the DevHub Org.
+
+```
+sfdx force:org:create --setdefaultusername --definitionfile=config/project-scratch-def.json --targetdevhubusername=targetdevhubusername
+```
+
+> It is optional, but recommended, to use the `--setdefaultusername` flag which binds the Scratch Org to the project's default Org, and avoids needed to keep track of the Scratch Orgs Username for use in other commands.
+
+Push the source into the Scratch Org
+
+```
+sfdx force:source:push
+```
+
+> If not using the `--setdefaultusername` flag, you will need to use the `--targetusername=targetusername` option for the push command.
+
+
+[Salesforce CLI]: https://developer.salesforce.com/tools/sfdxcli
+[Develoepr Org]: https://developer.salesforce.com/signup
