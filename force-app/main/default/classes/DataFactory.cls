@@ -1,5 +1,10 @@
 global without sharing class DataFactory {
 
+    public static AccountFactory Account;
+    static {
+        Account = new AccountFactory();
+    }
+
     /**
      * Generates an sObject of a given type. 
      * 
