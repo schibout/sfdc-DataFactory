@@ -1,6 +1,6 @@
 # Salesforce Apex DataFactory
 
-The `DataFactory` is a Salesofrce Apex class that provides a standard model for generating data. 
+The `DataFactory` is a Salesforce Apex class that provides a standard model for generating data.
 
 By defining a standard model, it becomes possible to to build an configurable extension framework that can allow for custom data factories adapted to the unique contraints of each Salesforce Org.
 
@@ -30,7 +30,7 @@ In a default Salesforce implementation, this Contact DataFactory may look like
 
 ```java
 public class ContactFactory implements DataFactory.sObjectFactory {
-    public Contact one() {
+    public SObject one() {
         return new Contact(LastName='Tester');
     }
 }
@@ -40,7 +40,7 @@ But in an Org with a Contact Validation Rule, a new Contact Data Factory can be 
 
 ```java
 public class MyContactFactory implements DataFactory.sObjectFactory {
-    public Contact one() {
+    public SObject one() {
         return new Contact(
             FirstName='John',
             LastName='Tester'
@@ -65,7 +65,7 @@ Login to your DevHub Org.
 sfdx force:auth:web:login
 ```
 
-Create the Scrtch Org from the DevHub Org.
+Create the Scratch Org from the DevHub Org.
 
 ```
 sfdx force:org:create --setdefaultusername --definitionfile=config/project-scratch-def.json --targetdevhubusername=targetdevhubusername
@@ -83,4 +83,4 @@ sfdx force:source:push
 
 
 [Salesforce CLI]: https://developer.salesforce.com/tools/sfdxcli
-[Develoepr Org]: https://developer.salesforce.com/signup
+[Developer Org]: https://developer.salesforce.com/signup
