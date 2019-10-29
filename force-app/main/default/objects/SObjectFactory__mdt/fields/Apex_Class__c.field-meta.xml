@@ -3,10 +3,8 @@
     <fullName>Apex_Class__c</fullName>
     <description>The Apex Class that implements a one() and many(Integer) method for generating records.</description>
     <externalId>false</externalId>
-    <fieldManageability>DeveloperControlled</fieldManageability>
+    <fieldManageability>SubscriberControlled</fieldManageability>
     <label>Apex Class</label>
-    <length>70</length>
     <required>false</required>
-    <type>Text</type>
-    <unique>false</unique>
+    <type>TextArea</type>
 </CustomField>
