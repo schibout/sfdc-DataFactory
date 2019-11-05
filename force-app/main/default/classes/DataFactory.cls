@@ -209,6 +209,86 @@ global without sharing class DataFactory {
      */
     public static List<sObject> load(String typeName, String jsonString) {
         List<sObject> data = new List<sObject>();
+        SObjectFactory factory = get(typeName);
+        for (Object row : (List<Object>)JSON.deserializeUntyped(jsonString)) {
+            SObject item = factory.make();
+            put(item, (Map<String, Object>)row);
+            data.add(item);
+        }
+        return data;
+    }
+    /**
+     * Generates sObjects from a JSON document with a given type.
+     * 
+     * @param typeName  Name of the Object type to create.
+     * @param resource A Static Resource containing a JSON-serialized objects.
+     * @return  A List of Objects generated from the resource.
+     */
+    public static List<sObject> load(String typeName, StaticResource resource) {
+        return load(typeName, resource.Body.toString());
+    }
+    /**
+     * Generates objects from a JSON document with a type indicated in the document.
+     * 
+     * JSON document should be an array of Objects with and "attributes" property
+     * first, and additional properties for Fields for the intended type. E.g.
+     * 
+     * ```json
+     * [
+     *     {
+     *         "attributes": {
+     *             "type": "Account"
+     *         },
+     *         "Name": "Test" 
+     *     }   
+     * ]
+     * ```
+     * 
+     * @param jsonString A JSON-formatted String to parse.
+     * @return  A List of sObjects generated from the resource.
+     */
+    public static List<sObject> load(String jsonString) {
+        List<SObject> loadedObjects = new List<SObject>();
+        for (SObject importedObject : import(jsonString)) {
+            String typeName = importedObject.getSObjectType().getDescribe().getName();
+            SObjectFactory factory = get(typeName);
+            SObject item = factory.make();
+            put(item, importedObject.getPopulatedFieldsAsMap());
+            loadedObjects.add(item);
+        }
+        return loadedObjects;
+    }
+    /**
+     * Generates objects from a JSON document with a type, from a Static Resource.
+     * 
+     * @param resource A Static Resource containing a JSON-serialized objects.
+     * @return  A List of sObjects generated from the resource.
+     */
+    public static List<sObject> load(StaticResource resource) {
+        return load(resource.Body.toString());
+    }
+
+
+    /**
+     * Generates sObjects from a JSON document with a given type.
+     * 
+     * JSON document should be an array of Objects with properties appropriate
+     * for the intended type. E.g.
+     * 
+     * ```json
+     * [
+     *     {
+     *         "Name": "Test" 
+     *     }   
+     * ]
+     * ```
+     * 
+     * @param typeName  Name of the Object type to create.
+     * @param jsonString A JSON-formatted String to parse.
+     * @return  A List of Objects generated from the resource.
+     */
+    public static List<sObject> import(String typeName, String jsonString) {
+        List<sObject> data = new List<sObject>();
         sObjectType objType = type(typeName);
         for (Object row : (List<Object>)JSON.deserializeUntyped(jsonString)) {
             SObject item = objType.newSObject();
@@ -218,13 +298,14 @@ global without sharing class DataFactory {
         return data;
     }
     /**
-     * @inherit
+     * Generates sObjects from a JSON document with a given type, from a Static Resource
+     * 
      * @param typeName  Name of the Object type to create.
      * @param resource A Static Resource containing a JSON-serialized objects.
      * @return  A List of Objects generated from the resource.
      */
-    public static List<sObject> load(String typeName, StaticResource resource) {
-        return load(typeName, resource.Body.toString());
+    public static List<sObject> import(String typeName, StaticResource resource) {
+        return import(typeName, resource.Body.toString());
     }
 
     /**
@@ -247,16 +328,17 @@ global without sharing class DataFactory {
      * @param jsonString A JSON-formatted String to parse.
      * @return  A List of sObjects generated from the resource.
      */
-    public static List<sObject> load(String jsonString) {
+    public static List<sObject> import(String jsonString) {
         return (List<sObject>)JSON.deserialize(jsonString, List<sObject>.class);
     }
     /**
-     * @inherit
+     * Generates objects from a JSON document with a type, from a Static Resource.
+     * 
      * @param resource A Static Resource containing a JSON-serialized objects.
      * @return  A List of sObjects generated from the resource.
      */
-    public static List<sObject> load(StaticResource resource) {
-        return load(resource.Body.toString());
+    public static List<sObject> import(StaticResource resource) {
+        return import(resource.Body.toString());
     }
 
     /**

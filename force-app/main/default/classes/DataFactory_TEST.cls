@@ -92,6 +92,44 @@ public class DataFactory_TEST {
     }
 
     @isTest
+    private static void import_json() {
+        String jsonData = '';
+        jsonData += '[';
+        jsonData += '  {';
+        jsonData += '    "Name": "Test 1"';
+        jsonData += '  },';
+        jsonData += '  {';
+        jsonData += '    "Name": "Test 2"';
+        jsonData += '  }';
+        jsonData += ']';
+        List<sObject> data = DataFactory.import('Account', jsonData);
+        Account anAccount = (Account)data[1];
+        System.assertEquals('Test 2', anAccount.Name);
+    }
+
+    @isTest
+    private static void import_json_attributes() {
+        String jsonData = '';
+        jsonData += '[';
+        jsonData += '  {';
+        jsonData += '    "attributes": {';
+        jsonData += '      "type": "Account"';
+        jsonData += '    },';
+        jsonData += '    "Name": "Test 1"';
+        jsonData += '  },';
+        jsonData += '  {';
+        jsonData += '    "attributes": {';
+        jsonData += '      "type": "Account"';
+        jsonData += '    },';
+        jsonData += '    "Name": "Test 2"';
+        jsonData += '  }';
+        jsonData += ']';
+        List<sObject> data = DataFactory.import(jsonData);
+        Account anAccount = (Account)data[1];
+        System.assertEquals('Test 2', anAccount.Name);
+    }
+
+    @isTest
     private static void setting_get() {
         // Not concerned about the outcome of this setting, only that the method returns.
         DataFactory_Setting__mdt anObject = DataFactory.setting('Test Setting');
