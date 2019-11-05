@@ -33,8 +33,9 @@ global without sharing class DataFactory {
         }
     }
 
-    
+    private static final Type FACTORY_TYPE = Type.forName('DataFactory.SObjectFactory');
 
+    
     /**
      * Finds the SObject Type from a name.
      * 
@@ -44,6 +45,22 @@ global without sharing class DataFactory {
     @TestVisible
     private static sObjectType type(String typeName) {
         return Schema.getGlobalDescribe().get(typeName);
+    }
+
+    /**
+     * Load a SObjectFactory class instance from a class name.ApexPages
+     * 
+     * @param className Name of the SOBjectFactory class to load.
+     * @return  An SObjectFactory instance, or null if not valid. 
+     */
+    private static SObjectFactory getFactory(String className) {
+        Type classType = Type.forName(className);
+        if (classType != null) {
+            if (FACTORY_TYPE.isAssignableFrom(classType)) {
+                return (SObjectFactory)classType.newInstance();     
+            }
+        }
+        return null;
     }
 
     /**
@@ -59,12 +76,7 @@ global without sharing class DataFactory {
         SObjectFactory factory;
         String handler = factoryHandlers.get(typeName);
         if (!String.isBlank(handler)) {
-            Type classType = Type.forName(handler);
-            if (classType != null) {
-                if (Type.forName('DataFactory.SObjectFactory').isAssignableFrom(classType)) {
-                    factory = (SObjectFactory)classType.newInstance();     
-                }
-            }
+            factory = getFactory(handler);
         }
         if (factory == null) { // Create a generic factory.
             factory = new SObjectFactory(typeName);
@@ -111,14 +123,9 @@ global without sharing class DataFactory {
      * @param properties     A Map of field names to values.
      * @return  A List of sObjects.
      */
-    public static List<sObject> many(String typeName, Integer count) {
-        List<sObject> newObjects = new List<sObject>();
+    public static List<SObject> many(String typeName, Integer count) {
         SObjectFactory factory = get(typeName);
-        while (count > 0) {
-            newObjects.add(factory.make());
-            count--;
-        }
-        return newObjects;
+        return factory.make(count);
     }
     /**
      * Generates a list of SObjects with a given size and of a given type. 
@@ -128,7 +135,7 @@ global without sharing class DataFactory {
      * @param properties     A Map of field names to values.
      * @return  A List of sObjects.
      */
-    public static List<sObject> many(String typeName, Integer count, Map<String, Object> properties) {
+    public static List<SObject> many(String typeName, Integer count, Map<String, Object> properties) {
         List<SObject> items = many(typeName, count);
         put(items, properties);
         return items;
@@ -291,6 +298,25 @@ global without sharing class DataFactory {
          */
         public virtual SObject make() {
             return type.newSObject();
+        }
+        /**
+         * Generates a list of sObject of a given type. 
+         * 
+         * The sObject itself does not include the Fields properties of the
+         * desired type. Fields can either be set using `put(fieldName, value)`
+         * or by casting the object to the desired type.
+         * 
+         * @param count Number of records to create.
+         * @return  A list of sObjects.
+         */
+        public virtual List<SObject> make(Integer count) {
+            List<SObject> newObjects = new List<SObject>();
+            while (count > 0) {
+                SObject newObject = make();
+                newObjects.add(newObject);
+                count--;
+            }
+            return newObjects;
         }
     }
 
